@@ -1,9 +1,9 @@
 async function redirect(details) {
-    let url = details.url;
-    if (!url.includes('{{v}}')) return;
+    if (details.frameId !== 0) return; // top level frame only; behavior only targets bookmarks, links, etc
 
     const storageValue = await chrome.storage.local.get();
 
+    let url = details.url;
     url = decodeURI(url);
     url = url.replace("{{v}}", storageValue["variab-url"]);
     url = encodeURI(url);
@@ -11,4 +11,10 @@ async function redirect(details) {
     chrome.tabs.update(details.tabId, {url: url});
 }
 
-chrome.webNavigation.onBeforeNavigate.addListener(redirect);
+const filter = {
+    url: [{
+        urlContains: "{{v}}"
+    }]
+};
+
+chrome.webNavigation.onBeforeNavigate.addListener(redirect, filter);
